@@ -33,16 +33,29 @@
 </head>
 <body>
   <h1>Tic Tac Toe 🎮</h1>
+  
+  <p>Choose your symbol:</p>
+  <button onclick="chooseSymbol('X')">Play as X</button>
+  <button onclick="chooseSymbol('O')">Play as O</button>
+  
   <div id="board"></div>
-  <p id="status">Player X's turn</p>
+  <p id="status"></p>
   <button onclick="resetGame()">Restart</button>
 
   <script>
     const board = document.getElementById("board");
     const statusText = document.getElementById("status");
-    let currentPlayer = "X";
+    let player = "";
+    let computer = "";
     let cells = ["", "", "", "", "", "", "", "", ""];
-    let gameActive = true;
+    let gameActive = false;
+
+    function chooseSymbol(symbol) {
+      player = symbol;
+      computer = player === "X" ? "O" : "X";
+      resetGame();
+      statusText.textContent = `You are ${player}. Your turn!`;
+    }
 
     function renderBoard() {
       board.innerHTML = "";
@@ -56,15 +69,24 @@
     }
 
     function cellClick(i) {
-      if (cells[i] !== "" || !gameActive) return;
-      cells[i] = currentPlayer;
+      if (!gameActive || cells[i] !== "" || !player) return;
+      cells[i] = player;
       renderBoard();
-      checkWinner();
-      currentPlayer = currentPlayer === "X" ? "O" : "X";
-      if (gameActive) statusText.textContent = `Player ${currentPlayer}'s turn`;
+      if (checkWinner(player)) return;
+      computerMove();
     }
 
-    function checkWinner() {
+    function computerMove() {
+      if (!gameActive) return;
+      let emptyCells = cells.map((val, i) => val === "" ? i : null).filter(v => v !== null);
+      if (emptyCells.length === 0) return;
+      let move = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      cells[move] = computer;
+      renderBoard();
+      checkWinner(computer);
+    }
+
+    function checkWinner(current) {
       const winPatterns = [
         [0,1,2], [3,4,5], [6,7,8],
         [0,3,6], [1,4,7], [2,5,8],
@@ -73,23 +95,30 @@
       for (let pattern of winPatterns) {
         const [a,b,c] = pattern;
         if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) {
-          statusText.textContent = `🎉 Player ${cells[a]} Wins!`;
+          statusText.textContent = current === player ? "🎉 You Win!" : "💻 Computer Wins!";
           gameActive = false;
-          return;
+          return true;
         }
       }
       if (!cells.includes("")) {
         statusText.textContent = "It's a Draw!";
         gameActive = false;
+        return true;
       }
+      statusText.textContent = current === player ? "💻 Computer's turn" : "Your turn!";
+      return false;
     }
 
     function resetGame() {
       cells = ["", "", "", "", "", "", "", "", ""];
-      currentPlayer = "X";
       gameActive = true;
       renderBoard();
-      statusText.textContent = "Player X's turn";
+      if (player === "O") {
+        statusText.textContent = "💻 Computer goes first";
+        computerMove();
+      } else {
+        statusText.textContent = `You are ${player}. Your turn!`;
+      }
     }
 
     renderBoard();
